@@ -1,0 +1,213 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Transcriber AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .dashboard-container {
+            padding: 4rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .history-table-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #fff;
+        }
+        
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            text-align: left;
+            padding: 1.25rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        td {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            vertical-align: middle;
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-verbatim { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+        .badge-english { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        
+        .time-value {
+            font-family: 'Courier New', Courier, monospace;
+            color: #38bdf8;
+        }
+
+        .action-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .action-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'home' %}" class="logo" style="text-decoration: none;">TRANSCRIBER</a>
+        <div style="display: flex; gap: 2rem;">
+            <a href="{% url 'scribe' %}" style="color: #fff; text-decoration: none; font-weight: 600;">Scribe Tool</a>
+            <a href="{% url 'dashboard' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="page-header" style="text-align: left; padding: 0 0 2rem;">
+            <h1>Transcription Insights</h1>
+            <p style="color: var(--text-muted);">Performance metrics and historical data for your interview sessions.</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ jobs.count }}</div>
+                <div class="stat-label">Total Jobs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{% if jobs %}{{ jobs.0.total_duration|floatformat:2 }}s{% else %}0s{% endif %}</div>
+                <div class="stat-label">Last Job Speed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{% if jobs %}{{ jobs.0.transcription_duration|floatformat:2 }}s{% else %}0s{% endif %}</div>
+                <div class="stat-label">AI Latency</div>
+            </div>
+        </div>
+
+        <div class="history-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job ID</th>
+                        <th>Type</th>
+                        <th>File / Source</th>
+                        <th>Upload Time</th>
+                        <th>AI Processing</th>
+                        <th>Finish Time</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td style="font-weight: 600;">#{{ job.id }}</td>
+                        <td>
+                            <span class="badge badge-{{ job.transcribe_type }}">
+                                {{ job.get_transcribe_type_display }}
+                            </span>
+                        </td>
+                        <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {% if job.audio_file %}
+                                🎵 {{ job.audio_file.name }}
+                            {% else %}
+                                📝 Manual Text
+                            {% endif %}
+                        </td>
+                        <td class="time-value">{{ job.upload_duration|floatformat:3 }}s</td>
+                        <td class="time-value">{{ job.transcription_duration|floatformat:3 }}s</td>
+                        <td style="color: var(--text-muted); font-size: 0.875rem;">
+                            {{ job.finish_time|date:"M d, H:i" }}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 1rem;">
+                                <a href="#" class="action-link" onclick="viewDetails('{{ job.id }}')">View Result</a>
+                                <a href="{% url 'download_docx' job.id %}" class="action-link" style="color: #38bdf8;">Download Docx</a>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Hidden content for modal or details -->
+                    <div id="job-{{ job.id }}-content" style="display: none;">{{ job.formatted_content }}</div>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 4rem; color: var(--text-muted);">
+                            No transcription jobs recorded yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Details Modal Placeholder -->
+    <div id="detailsOverlay" class="loader-overlay" style="display: none;">
+        <div class="history-table-container" style="max-width: 800px; max-height: 80vh; padding: 2rem; overflow-y: auto;">
+            <h2 id="modalTitle" style="margin-bottom: 1.5rem;">Job Details</h2>
+            <div id="modalBody" class="output-box" style="margin-bottom: 2rem;"></div>
+            <button class="cta-button" onclick="closeDetails()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function viewDetails(id) {
+            const content = document.getElementById(`job-${id}-content`).innerText;
+            document.getElementById('modalTitle').innerText = `Job #${id} Result`;
+            document.getElementById('modalBody').innerText = content;
+            document.getElementById('detailsOverlay').style.display = 'flex';
+        }
+
+        function closeDetails() {
+            document.getElementById('detailsOverlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

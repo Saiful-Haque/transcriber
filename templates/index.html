@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcriber | Modern Django Project</title>
+    <meta name="description" content="A simple yet powerful Django project with a stunning home page.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <nav>
+        <div class="logo">TRANSCRIBER</div>
+        <div style="display: flex; gap: 2rem;">
+            <a href="{% url 'scribe' %}" style="color: #fff; text-decoration: none; font-weight: 600;">Scribe Tool</a>
+            <a href="{% url 'dashboard' %}" style="color: #fff; text-decoration: none; font-weight: 600;">Dashboard</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div class="badge-new">NEW: GPU-Accelerated Transcription</div>
+            <h1>Turn Interviews into <br> <span class="gradient-text">Professional Records</span></h1>
+            <p>Leverage state-of-the-art AI to transcribe audio and format interview transcripts instantly. Precision-engineered for researchers and professionals.</p>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <a href="{% url 'scribe' %}" class="cta-button" style="text-decoration: none;">Launch Scribe Tool</a>
+                <a href="{% url 'dashboard' %}" class="cta-button" style="text-decoration: none; background: var(--glass-bg); border: 1px solid var(--glass-border);">View Dashboard</a>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎙️</div>
+                <h3>Whisper AI Core</h3>
+                <p>Powered by OpenAI's Whisper model, running locally on your RTX GPU for maximum privacy and lightning-fast speed.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📄</div>
+                <h3>Pro Word Export</h3>
+                <p>Download your transcripts in professionally formatted .docx files, complete with metadata tables, borders, and branding.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Verbatim Accuracy</h3>
+                <p>Preserve nuance with verbatim modes that retain Hinglish context and fillers like "achha" and "theek hai".</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.getElementById('getStartedBtn').addEventListener('click', () => {
+            alert('Welcome to Transcriber! Your Django journey starts here.');
+        });
+    </script>
+</body>
+</html>

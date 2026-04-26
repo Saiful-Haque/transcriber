@@ -1,0 +1,157 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scribe Tool | Transcriber</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .page-header {
+            text-align: center;
+            padding: 4rem 1rem 2rem;
+        }
+        .page-header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader Overlay -->
+    <div id="loaderOverlay" class="loader-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Intelligence at Work...</div>
+        <div class="loading-subtext">Transcribing and formatting your interview. Please wait.</div>
+    </div>
+
+    <nav>
+        <a href="{% url 'home' %}" class="logo" style="text-decoration: none;">TRANSCRIBER</a>
+        <div style="display: flex; gap: 2rem;">
+            <a href="{% url 'scribe' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Scribe Tool</a>
+            <a href="{% url 'dashboard' %}" style="color: #fff; text-decoration: none; font-weight: 600;">Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <h1>Transcription Formatter</h1>
+        <p style="color: var(--text-muted);">Paste your interview text or upload audio for AI processing.</p>
+    </div>
+
+    <div class="scribe-container">
+        <!-- Tab Navigation -->
+        <div class="tabs" style="display: flex; gap: 1rem; margin-bottom: 2rem; justify-content: center;">
+            <button type="button" class="cta-button" id="tabText" onclick="showSection('text')" style="background: var(--glass-bg);">Text Formatter</button>
+            <button type="button" class="cta-button" id="tabAudio" onclick="showSection('audio')" style="background: var(--glass-bg); {% if not mode and not output %}opacity: 0.5;{% endif %}">Audio Transcription</button>
+        </div>
+
+        {% if not mode and not output and not audio_file %}
+        <div id="audioInfo" style="display: none; text-align: center; color: var(--text-muted); margin-bottom: 1rem; font-size: 0.875rem;">
+            Note: Audio transcription is disabled in this cloud version to ensure free hosting. Please use the Text Formatter.
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="scribe-grid" id="scribeForm" onsubmit="return handleFormSubmit()">
+            {% csrf_token %}
+            <div class="input-section">
+                <div id="textSection">
+                    <h2>Raw Transcription</h2>
+                    {{ form.raw_text }}
+                </div>
+                
+                <div id="audioSection" style="display: none;">
+                    <h2>Audio Upload</h2>
+                    <div class="custom-file-upload">
+                        <label for="id_audio_file" class="upload-area">
+                            <div class="upload-icon">📁</div>
+                            <span id="file-name-display">Click to upload or drag & drop</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">MP3, WAV, M4A up to 50MB</span>
+                        </label>
+                        {{ form.audio_file }}
+                    </div>
+                    
+                    <div style="margin-top: 2rem;">
+                        <label class="section-subtitle">{{ form.transcribe_type.label }}</label>
+                        <div class="mode-selector">
+                            {% for radio in form.transcribe_type %}
+                            <label class="mode-card">
+                                {{ radio.tag }}
+                                <div class="mode-info">
+                                    <span class="mode-title">{{ radio.choice_label }}</span>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="cta-button submit-btn">Process Now</button>
+            </div>
+
+            <div class="output-section">
+                <h2>Formatted Output</h2>
+                <div class="output-box" id="outputBox">{% if output %}{{ output }}{% else %}Wait for the magic to happen...{% endif %}</div>
+                {% if output %}
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="cta-button" onclick="copyToClipboard()" style="flex: 1; background: #10b981; box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);">Copy to Clipboard</button>
+                    {% if job_id %}
+                    <a href="{% url 'download_docx' job_id %}" class="cta-button" style="flex: 1; text-decoration: none; text-align: center; background: #3b82f6; box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);">Download Word File</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function showSection(section) {
+            document.getElementById('textSection').style.display = section === 'text' ? 'block' : 'none';
+            document.getElementById('audioSection').style.display = section === 'audio' ? 'block' : 'none';
+            if (document.getElementById('audioInfo')) {
+                document.getElementById('audioInfo').style.display = section === 'audio' ? 'block' : 'none';
+            }
+            
+            // Highlight active button
+            document.getElementById('tabText').style.background = section === 'text' ? 'var(--primary-color)' : 'var(--glass-bg)';
+            document.getElementById('tabAudio').style.background = section === 'audio' ? 'var(--primary-color)' : 'var(--glass-bg)';
+        }
+        
+        // Handle form submission to show loader
+        function handleFormSubmit() {
+            // Only show loader if there's content to process
+            const textArea = document.querySelector('textarea[name="raw_text"]');
+            const fileInput = document.querySelector('input[name="audio_file"]');
+            
+            if (textArea.value.trim() === "" && fileInput.files.length === 0) {
+                alert("Please provide text or upload an audio file first.");
+                return false;
+            }
+
+            document.getElementById('loaderOverlay').style.display = 'flex';
+            return true;
+        }
+
+        // Default to text
+        showSection('text');
+
+        // Update file name display
+        document.querySelector('input[name="audio_file"]').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : "Click to upload or drag & drop";
+            document.getElementById('file-name-display').innerText = fileName;
+        });
+
+        function copyToClipboard() {
+            const outputBox = document.getElementById('outputBox');
+            const text = outputBox.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>

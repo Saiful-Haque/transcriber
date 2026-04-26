@@ -1,0 +1,11 @@
+Django
+python-docx
+whitenoise
+gunicorn
+lxml
+numba
+numpy
+requests
+tqdm
+tiktoken
+more-itertools

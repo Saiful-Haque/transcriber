@@ -179,10 +179,12 @@ class DownloadDocxView(View):
         header_para = header.paragraphs[0]
         header_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         
-        logo_path = r"C:\Users\SAIF\Downloads\transcriber logo.jpg"
-        if os.path.exists(logo_path):
+        # Use project-relative path for logo so it works on both Local and Cloud
+        logo_path = settings.BASE_DIR / 'static' / 'images' / 'logo.jpg'
+        
+        if logo_path.exists():
             run = header_para.add_run()
-            run.add_picture(logo_path, width=Inches(1.8))
+            run.add_picture(str(logo_path), width=Inches(1.8))
         else:
             header_para.text = "Transcribersnet\nfor all your transcription needs"
             
